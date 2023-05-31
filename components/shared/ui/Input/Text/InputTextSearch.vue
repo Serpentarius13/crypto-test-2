@@ -45,9 +45,11 @@ const model = defineModel<string>({ required: true });
     input {
       width: 100%;
       padding: 2.5rem 2rem 2.5rem 5.5rem;
-      background-color: var(--blue-dark);
+      background-color: var(--blue-darkest);
       border-radius: var(--radius-small);
       color: var(--gray);
+
+      font-weight: 500;
 
       &:focus {
         outline-color: white;

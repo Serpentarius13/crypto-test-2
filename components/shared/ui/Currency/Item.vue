@@ -15,7 +15,9 @@
 </template>
 
 <script setup lang="ts">
-interface ICurrencyItem extends Pick<ICurrency, "logo" | "name" | "currency"> {}
+import { ICurrency } from "~/features/types/currency.types";
+
+type ICurrencyItem = Pick<ICurrency, "logo" | "name" | "currency">;
 
 const props = defineProps<ICurrencyItem>();
 </script>
@@ -37,6 +39,7 @@ const props = defineProps<ICurrencyItem>();
 
   span {
     color: var(--gray);
+    text-transform: uppercase;
   }
 }
 </style>

@@ -13,3 +13,11 @@ export interface ICurrency {
 }
 
 export type TCurrencyList = number[];
+
+
+interface ICurrencyEdge {
+  min: number;
+  max: number;
+}
+
+export type TBoundCurrency = Partial<ICurrencyEdge> & ICurrency & {value: number};

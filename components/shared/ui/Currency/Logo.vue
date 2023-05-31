@@ -6,7 +6,9 @@
 </template>
 
 <script setup lang="ts">
-interface ICurrencyLogo extends Pick<ICurrency, "logo" | "name"> {}
+import { ICurrency } from "~/features/types/currency.types";
+
+type ICurrencyLogo = Pick<ICurrency, "logo" | "name">;
 
 const props = defineProps<ICurrencyLogo>();
 </script>

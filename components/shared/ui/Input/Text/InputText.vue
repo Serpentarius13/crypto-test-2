@@ -19,7 +19,7 @@
 <script setup lang="ts">
 interface IInputText {
   label?: string;
-  icon: string;
+  icon?: string;
   placeholder: string;
 }
 

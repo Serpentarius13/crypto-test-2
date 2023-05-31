@@ -1,39 +1,15 @@
-@import "./auxi/icon.scss", "./auxi/variables.scss";
+@import "./auxi/icon.scss", "./auxi/variables.scss", "./auxi/fonts.scss",
+  "./auxi/normalize.scss";
 
 @import "./utils/components.scss";
 
-*,
-*::after,
-*::before {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 html {
   font-size: 62.5%;
+  font-family: "Gilroy", sans-serif;
 }
 
 body {
   width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
-}
-
-button {
-  background: none;
-  border: none;
-  outline: none;
-}
-
-a,
-a:visited,
-a:active {
-  text-decoration: none;
-  color: inherit;
-}
-
-ul,
-ul li {
-  list-style-type: none;
 }
