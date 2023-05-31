@@ -15,6 +15,7 @@
       :currencies="searchedCurrencies"
       :selected-currency="selectedCurrency"
       class="selector__bottom"
+      :focus-id="focusId"
       :handle-set-currency="handleSetCurrency"
     />
   </SharedUiBlockWrapper>
@@ -29,6 +30,7 @@ interface ICurrencySelector {
   currencies: ICurrency[];
   selectedCurrency: TBoundCurrency | null;
   handleSetCurrency: (cur: ICurrency) => void;
+  focusId?: string;
 }
 
 const props = defineProps<ICurrencySelector>();

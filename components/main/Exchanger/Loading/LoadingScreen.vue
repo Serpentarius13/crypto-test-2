@@ -1,6 +1,8 @@
 <template>
   <Teleport to="body">
-    <SharedUiLoadingScreen :is-loading="store.isLoading" />
+    <SharedUiLoadingScreen
+      :is-loading="store.isLoading || !store.isCurrenciesLoaded"
+    />
   </Teleport>
 </template>
 

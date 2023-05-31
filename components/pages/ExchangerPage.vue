@@ -7,6 +7,7 @@
         v-if="store.leftCurrency"
         title="Отдаете"
         :handle-set-currency="store.setLeftCurrency"
+        :focus-id="FROM_INPUT_ID"
       />
 
       <MainExchangerCurrencySelector
@@ -14,14 +15,18 @@
         :selected-currency="store.rightCurrency"
         title="Отдаете"
         :handle-set-currency="store.setRightCurrency"
+        :focus-id="TO_INPUT_ID"
       />
 
-      <MainExchangerForm />
+      <SharedUiBlockWrapper>
+        <MainExchangerForm v-if="store.isCurrenciesLoaded" />
+      </SharedUiBlockWrapper>
     </main>
   </ClientOnly>
 </template>
 
 <script setup lang="ts">
+import { FROM_INPUT_ID, TO_INPUT_ID } from "~/features/constants/inputIDs";
 import { ICurrency, TCurrencyList } from "~/features/types/currency.types";
 import { useExchangerStore } from "~/stores/useExchangerStore";
 

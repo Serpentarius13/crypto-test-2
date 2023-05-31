@@ -5,12 +5,14 @@
       <p class="text-small">
         {{ error.message }}
       </p>
+
+      <SharedUiButton @click="clearError({ redirect: '/' })" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{ error: Error; reset: () => void }>();
+defineProps<{ error: Error }>();
 </script>
 
 <style scoped lang="scss">
@@ -36,7 +38,7 @@ defineProps<{ error: Error; reset: () => void }>();
     }
 
     p {
-        color: white;
+      color: white;
     }
   }
 }

@@ -6,26 +6,56 @@
       <NuxtIcon v-if="icon" :name="icon" class="icon" />
 
       <input
-        type="text"
         :placeholder="placeholder"
         :style="{ paddingLeft: icon ? '6.4rem' : '' }"
-        v-bind="$attrs"
         v-model="model"
+        :type="type ?? 'text'"
+        @input="handleInput"
+        :class="[errorValue && 'error']"
       />
     </div>
+
+    <strong class="text-small">
+      {{ errorValue }}
+    </strong>
   </label>
 </template>
 
 <script setup lang="ts">
+import { InputHTMLAttributes } from "vue";
+
 interface IInputText {
   label?: string;
   icon?: string;
-  placeholder: string;
+  error?: string;
+  pattern?: InputHTMLAttributes["pattern"];
+  type?: InputHTMLAttributes["type"];
+  placeholder?: InputHTMLAttributes["placeholder"];
 }
 
-const props = defineProps<IInputText>();
+const { label, icon, placeholder, type, pattern, error } =
+  defineProps<IInputText>();
 
 const model = defineModel<string>({ required: true });
+
+const regexp = new RegExp(pattern ?? "", "ig");
+
+const errorValue = ref<string>("");
+
+const timeout = ref<NodeJS.Timeout | null>(null);
+function handleInput(e: Event) {
+  const target = e.target as HTMLInputElement;
+
+  if (!regexp.test(target.value.trim()) || target.value === "") {
+    timeout.value = setTimeout(() => {
+      errorValue.value = error ?? "Ошибка введенных данных";
+    }, 300);
+  } else {
+    if (timeout.value) clearTimeout(timeout.value);
+
+    errorValue.value = "";
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -65,6 +95,18 @@ const model = defineModel<string>({ required: true });
       aspect-ratio: 1;
       color: inherit;
     }
+  }
+
+  strong {
+    color: red;
+    font-weight: bold;
+  }
+}
+
+.error {
+  border: 1px solid red;
+  &:focus {
+    outline: none;
   }
 }
 </style>

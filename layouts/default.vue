@@ -11,7 +11,7 @@
 <style scoped lang="scss">
 .layout {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
 
   padding: 12.2rem 14.2rem;
 

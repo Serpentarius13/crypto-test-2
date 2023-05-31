@@ -33,7 +33,7 @@ export interface IStructInput {
   name: string;
   regex: string;
   send: IStructInputDetails;
-  receiver: IStructInputDetails;
+  receive: IStructInputDetails;
 }
 
 export interface IStructInnerDirection {

@@ -1,3 +1,5 @@
+import { IStructInput } from "./form-struct.types";
+
 export interface ICurrencyLogo {
   withBackground: string;
   white: string;
@@ -14,10 +16,10 @@ export interface ICurrency {
 
 export type TCurrencyList = number[];
 
-
 interface ICurrencyEdge {
   min: number;
   max: number;
 }
 
-export type TBoundCurrency = Partial<ICurrencyEdge> & ICurrency & {value: number};
+export type TBoundCurrency = Partial<ICurrencyEdge> &
+  ICurrency & { value: number; inputs?: IStructInput[] };

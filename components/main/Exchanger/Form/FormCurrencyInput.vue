@@ -3,7 +3,16 @@
     <span class="text-small input__title">
       {{ label }}
     </span>
-    <div class="input__inner">
+    <div
+      class="input__inner"
+      :style="
+        error
+          ? {
+              border: '1px solid red',
+            }
+          : {}
+      "
+    >
       <SharedUiCurrencyLogo
         class="input__inner-logo"
         :logo="currency.logo"
@@ -16,7 +25,10 @@
         class="text-medium"
         :min="currency?.min ?? 0"
         :max="currency?.max ?? 0"
-        v-model="localRef"
+        step="any"
+        @input="handleInput"
+        @invalid="handleSetInvalidInput"
+        v-model="model"
       />
     </div>
 
@@ -35,6 +47,10 @@
         <span> Макс.: {{ currency?.max }} </span>
       </template>
     </div>
+
+    <span v-if="error" class="input__error text-small">
+      {{ error }}
+    </span>
   </label>
 </template>
 
@@ -46,30 +62,55 @@ import { useExchangerStore } from "~/stores/useExchangerStore";
 interface IFormCurrencyInput {
   currency: TBoundCurrency | null;
   label: string;
-  handleChange: (v: string) => void;
 }
 
-const localRef = ref<string>("");
+const { currency, label } = defineProps<IFormCurrencyInput>();
 
-const { currency, label, handleChange } = defineProps<IFormCurrencyInput>();
 const store = useExchangerStore();
 
-watch(localRef, (next, prev) => {
-  if (!currency) return (localRef.value = "");
-  const parsedPrev = parseFloat(prev);
-  const parsedNext = parseFloat(next);
+const model = defineModel<string>({ required: true });
 
-  if (checkIsUndefined(currency.min) || checkIsUndefined(currency.max)) {
-    return (localRef.value = "");
+const error = ref<string>("");
+
+function handleSetInvalidInput(e: Event) {
+  e.preventDefault();
+  const target = e.target as HTMLInputElement;
+
+  if (target.min > target.value) {
+    error.value = `Значение не должно быть ниже ${target.min}`;
+  } else if (target.max < target.value) {
+    error.value = `Значение не должно быть выше ${target.max}`;
   }
+}
+
+function handleInput(e: Event) {
   if (
-    (parsedNext < currency.min || parsedNext > currency.max) &&
-    parsedNext.toString().length >= currency.max.toString().length
-  ) {
-    return (localRef.value = parsedPrev.toString());
+    checkIsUndefined(currency?.max) ||
+    checkIsUndefined(currency?.min) ||
+    !currency
+  )
+    return;
+
+  error.value = "";
+
+  const target = e.target as HTMLInputElement;
+
+  const v = parseFloat(target.value);
+
+  if (v > currency.max) {
+    const nextVal = currency.max.toString();
+    target.value = nextVal;
+    model.value = nextVal;
+    return;
   }
-  handleChange(localRef.value);
-});
+
+  if (v < currency.min) {
+    const nextVal = currency.min.toString();
+    target.value = nextVal;
+    model.value = nextVal;
+    return;
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -106,7 +147,8 @@ watch(localRef, (next, prev) => {
     input {
       text-align: right;
       color: white;
-      max-width: 35%;
+      max-width: 55%;
+      width: 100%;
       outline: none;
     }
   }
@@ -121,6 +163,11 @@ watch(localRef, (next, prev) => {
       color: var(--gray);
       font-weight: 400;
     }
+  }
+
+  &__error {
+    color: red;
+    font-weight: 700;
   }
 }
 </style>

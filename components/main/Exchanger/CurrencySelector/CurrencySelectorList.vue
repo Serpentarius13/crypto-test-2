@@ -2,7 +2,7 @@
   <div class="list__wrapper">
     <ul class="list" role="list">
       <li v-for="cur in currencies" :key="cur.name">
-        <button @click="handleSetCurrency(cur)">
+        <button @click="handleCurrency(cur)">
           <SharedUiCurrencyItem
             :logo="cur.logo"
             :name="cur.name"
@@ -35,9 +35,24 @@ interface ICurrencySelectorList {
   currencies: ICurrency[];
   selectedCurrency: TBoundCurrency | null;
   handleSetCurrency: (cur: ICurrency) => void;
+  focusId?: string;
 }
 
 const props = defineProps<ICurrencySelectorList>();
+
+function handleCurrency(cur: ICurrency) {
+  if (cur.name !== props.selectedCurrency?.name) {
+    props.handleSetCurrency(cur);
+  }
+
+  if (props.focusId) {
+    const element = document.getElementById(props.focusId);
+
+    if (!element) return;
+
+    element.focus();
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -51,7 +66,8 @@ const props = defineProps<ICurrencySelectorList>();
   @include scrollbar(var(--scroll-color));
 
   overflow-y: auto;
-  max-height: 60vh;
+
+  max-height: var(--block-height);
 
   button {
     text-align: left;
@@ -62,7 +78,7 @@ const props = defineProps<ICurrencySelectorList>();
     padding-right: 1.5rem !important;
     background-color: var(--blue-darkest);
     width: 100%;
-    max-height: 60vh;
+
     overflow-y: hidden;
   }
 

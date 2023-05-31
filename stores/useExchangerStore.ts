@@ -7,6 +7,7 @@ import {
   TBoundCurrency,
   TCurrencyList,
 } from "~/features/types/currency.types";
+
 import { checkIsUndefined } from "~/features/utils/checkIsUndefined";
 
 import { extractCurrencyId } from "~/features/utils/currency/extractCurrencyId";
@@ -20,8 +21,11 @@ interface IExchangerStore {
   rightCurrency: TBoundCurrency | null;
   fromCurrencies: TCurrencyList;
   toCurrencies: TCurrencyList;
+  currentCourse: null | number;
+  formValues: Record<string, string>;
   isError: boolean;
   isLoading: boolean;
+  acceptRules: boolean;
 }
 
 export const useExchangerStore = defineStore("exchanger-store", {
@@ -31,8 +35,11 @@ export const useExchangerStore = defineStore("exchanger-store", {
     rightCurrency: null,
     fromCurrencies: [],
     toCurrencies: [],
+    currentCourse: null,
     isError: false,
     isLoading: false,
+    formValues: {},
+    acceptRules: false,
   }),
   actions: {
     setCurrencies(currencies: ICurrency[]) {
@@ -47,30 +54,16 @@ export const useExchangerStore = defineStore("exchanger-store", {
         return acc;
       }, {} as TCurrencies);
     },
-    setFromCurrencies(currencies: TCurrencyList) {
+    async setFromCurrencies(currencies: TCurrencyList) {
       this.fromCurrencies = currencies;
 
-      this.setLeftCurrency(this.currencies[currencies[0]]).then(() =>
-        this.setRightCurrency(this.currencies[this.toCurrencies[0]])
-      );
+      await this.setLeftCurrency(this.currencies[currencies[0]]);
+
+      await this.setRightCurrency(this.currencies[this.toCurrencies[0]]);
     },
 
     getCurrency(id: number) {
       return this.currencies?.[id];
-    },
-
-    setLeftValue(v: string) {
-      if (checkIsUndefined(this.leftCurrency?.value) || !this.leftCurrency)
-        return;
-      const parsed = parseFloat(v);
-      this.leftCurrency.value = parsed;
-    },
-
-    setRightValue(v: string) {
-      if (checkIsUndefined(this.rightCurrency?.value) || !this.rightCurrency)
-        return;
-      const parsed = parseFloat(v);
-      this.rightCurrency.value = parsed;
     },
 
     async setLeftCurrency(currency: ICurrency) {
@@ -83,15 +76,54 @@ export const useExchangerStore = defineStore("exchanger-store", {
       }
 
       if (!this.toCurrencies.some((id) => id === this.rightCurrency?.ids[0])) {
-        this.rightCurrency = null;
-      } else {
-        this.getMinimals();
+        this.rightCurrency = {
+          ...this.currencies[this.toCurrencies[0]],
+          value: 0,
+        };
       }
+
+      this.getMinimals();
     },
 
-    setRightCurrency(currency: ICurrency) {
+    setLeftValue(v: string) {
+      if (
+        !this.leftCurrency ||
+        !this.rightCurrency ||
+        !this.currentCourse ||
+        checkIsUndefined(this.leftCurrency?.min) ||
+        checkIsUndefined(this.leftCurrency?.max) ||
+        checkIsUndefined(this.rightCurrency?.min) ||
+        checkIsUndefined(this.rightCurrency?.max)
+      )
+        return;
+
+      const value = parseFloat(v);
+
+      this.leftCurrency.value = value;
+      this.rightCurrency.value = value * this.currentCourse;
+    },
+
+    setRightValue(v: string) {
+      if (
+        !this.leftCurrency ||
+        !this.rightCurrency ||
+        !this.currentCourse ||
+        checkIsUndefined(this.leftCurrency?.min) ||
+        checkIsUndefined(this.leftCurrency?.max) ||
+        checkIsUndefined(this.rightCurrency?.min) ||
+        checkIsUndefined(this.rightCurrency?.max)
+      )
+        return;
+
+      const value = parseFloat(v);
+
+      this.rightCurrency.value = value;
+      this.leftCurrency.value = value / this.currentCourse;
+    },
+
+    async setRightCurrency(currency: ICurrency) {
       this.rightCurrency = { ...currency, value: 0 };
-      this.getMinimals();
+      await this.getMinimals();
     },
 
     async getMinimals() {
@@ -103,16 +135,29 @@ export const useExchangerStore = defineStore("exchanger-store", {
           extractCurrencyId(this.leftCurrency),
           extractCurrencyId(this.rightCurrency),
         ];
-        const { from, to } = await getFormStructure(leftId, rightId);
+        const { from, to, course, structure } = await getFormStructure(
+          leftId,
+          rightId
+        );
 
         const leftBounds = extractStructMinMax(from);
         this.leftCurrency.min = leftBounds[0];
         this.leftCurrency.max = leftBounds[1];
 
+        this.leftCurrency.inputs = structure.from.input;
+
         const rightBounds = extractStructMinMax(to);
 
         this.rightCurrency.min = rightBounds[0];
         this.rightCurrency.max = rightBounds[1];
+
+        this.rightCurrency.inputs = structure.to.input;
+
+        this.currentCourse = course;
+
+        const formValues = this.makeFormValues();
+
+        this.formValues = formValues;
       } catch (error) {
         this.isError = true;
       } finally {
@@ -147,39 +192,55 @@ export const useExchangerStore = defineStore("exchanger-store", {
         this.isLoading = false;
       }, 300);
     },
+
+    makeFormValues() {
+      if (!this.leftCurrency?.inputs || !this.rightCurrency?.inputs) return {};
+      return [...this.leftCurrency.inputs, ...this.rightCurrency.inputs].reduce(
+        (acc, cur) => {
+          if (cur.receive.visible) acc[cur.name] = "";
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+    },
   },
   getters: {
-    fromCurrenciesGetter(state) {
+    fromCurrenciesGetter(state): ICurrency[] {
       return state.fromCurrencies.map((id) => state.currencies[id]);
     },
-    toCurrenciesGetter(state) {
+    toCurrenciesGetter(state): ICurrency[] {
       return state.toCurrencies.map((id) => state.currencies[id]);
     },
 
-    isCurrenciesLoaded(state) {
-      return Object.keys(state.currencies).length;
+    isCurrenciesLoaded(state): boolean {
+      return (
+        !!Object.keys(state.currencies).length &&
+        !!this.rightCurrency &&
+        !!this.leftCurrency
+      );
     },
 
-    isOutOfBounds(state) {
-      const [left, right] = [state.leftCurrency, state.rightCurrency];
-      console.log("hereS");
-      if (
-        !left ||
-        !right ||
-        checkIsUndefined(left.min) ||
-        checkIsUndefined(right.min) ||
-        checkIsUndefined(left.max) ||
-        checkIsUndefined(right.max)
-      )
-        return true;
+    isFormValid(state) {
+      if (!state.leftCurrency?.inputs || !state.rightCurrency?.inputs)
+        return false;
 
-      console.log("here");
+      const form = state.formValues;
 
-      if (left.value < left.min || left.value > left.max) return true;
-      if (right.value < right.min || right.value > right.max) return true;
+      const inputs = [
+        ...state.leftCurrency?.inputs,
+        ...state.rightCurrency?.inputs,
+      ];
 
-      console.log("here");
-      return false;
+      const patterns = inputs.reduce((acc, cur) => {
+        acc[cur.name] = new RegExp(cur.regex);
+        return acc;
+      }, {} as Record<string, RegExp>);
+
+      const isValid = Object.keys(form).every(
+        (k) => patterns[k]?.test(form[k]) && form[k] !== ""
+      );
+
+      return isValid && state.acceptRules;
     },
   },
 });

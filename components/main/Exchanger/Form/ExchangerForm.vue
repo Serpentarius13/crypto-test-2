@@ -1,63 +1,80 @@
 <template>
-  <SharedUiBlockWrapper>
-    <form class="form" @submit.prevent="handleSubmit">
-      <MainExchangerFormCurrencyInput
-        :currency="store.leftCurrency"
-        label="Отдаете"
-        :handle-change="store.setLeftValue"
-      />
-      <MainExchangerFormCurrencyInput
-        :currency="store.rightCurrency"
-        label="Получаете"
-        :handle-change="store.setRightValue"
-      />
+  <form class="form" @submit.prevent="handleSubmit">
+    <MainExchangerFormCurrencyInput
+      :currency="store.leftCurrency"
+      label="Отдаете"
+      v-model="fromValue"
+      :id="FROM_INPUT_ID"
+    />
+    <MainExchangerFormCurrencyInput
+      :currency="store.rightCurrency"
+      label="Получаете"
+      v-model="toValue"
+      :id="TO_INPUT_ID"
+    />
 
-      <h3 class="form__midtitle text-big">Ваши реквизиты</h3>
+    <h3 class="form__midtitle text-big">Ваши реквизиты</h3>
 
-      <SharedUiInputText
-        icon="avatar"
-        placeholder="ФИО Получателя"
-        v-model="name"
-      />
-      <SharedUiInputText
-        icon="mail"
-        placeholder="Почта получателя"
-        v-model="email"
-      />
+    <MainExchangerFormInputs
+      direction="send"
+      :inputs="store.leftCurrency?.inputs ?? []"
+    />
+    <MainExchangerFormInputs
+      direction="receive"
+      :inputs="store.rightCurrency?.inputs ?? []"
+    />
+    <SharedUiInputCheckbox v-model="store.acceptRules">
+      <p class="text-smaller form__checkbox-text" @click.prevent>
+        Я согласен с <a> обработкой персональных данных </a> и принимаю
+        <a> правила обмена </a>
+      </p>
+    </SharedUiInputCheckbox>
 
-      <SharedUiInputCheckbox v-model="acceptsRules">
-        <p class="text-smaller form__checkbox-text" @click.prevent>
-          Я согласен с <a> обработкой персональных данных </a> и принимаю
-          <a> правила обмена </a>
-        </p>
-      </SharedUiInputCheckbox>
+    <SharedUiButton
+      class="form__submit"
+      type="submit"
+      :disabled="!store.isFormValid"
+    >
+      <NuxtIcon name="loading" />
 
-      <SharedUiButton
-        class="form__submit"
-        type="submit"
-        :disabled="store.isOutOfBounds || !name || !email || !acceptsRules"
-      >
-        <NuxtIcon name="loading" />
-
-        <span> Перейти к оплате </span>
-      </SharedUiButton>
-    </form>
-  </SharedUiBlockWrapper>
+      <span> Перейти к оплате </span>
+    </SharedUiButton>
+  </form>
 </template>
 
 <script setup lang="ts">
+import { FROM_INPUT_ID, TO_INPUT_ID } from "~/features/constants/inputIDs";
+
 import { useExchangerStore } from "~/stores/useExchangerStore";
 
 const store = useExchangerStore();
 
-const isChecked = ref<boolean>(false);
+const fromValue = computed({
+  get() {
+    return store.leftCurrency?.value.toPrecision() ?? "";
+  },
+  set(newValue: string) {
+    store.setLeftValue(newValue);
+  },
+});
 
-const name = ref<string>("");
-const email = ref<string>("");
-const acceptsRules = ref<boolean>(false);
+const toValue = computed({
+  get() {
+    return store.rightCurrency?.value.toPrecision() ?? "";
+  },
+  set(newValue: string) {
+    store.setRightValue(newValue);
+  },
+});
 
-function handleSubmit() {
-  console.log(store.isOutOfBounds);
+function handleSubmit(e: Event) {
+  alert(
+    JSON.stringify([
+      store.formValues,
+      store.leftCurrency?.value,
+      store.rightCurrency?.value,
+    ])
+  );
 }
 </script>
 
