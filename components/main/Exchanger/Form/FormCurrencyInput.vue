@@ -48,9 +48,7 @@
       </template>
     </div>
 
-    <span v-if="error" class="input__error text-small">
-      {{ error }}
-    </span>
+    <SharedUiInputError :error="error" />
   </label>
 </template>
 
@@ -163,11 +161,6 @@ function handleInput(e: Event) {
       color: var(--gray);
       font-weight: 400;
     }
-  }
-
-  &__error {
-    color: red;
-    font-weight: 700;
   }
 }
 </style>

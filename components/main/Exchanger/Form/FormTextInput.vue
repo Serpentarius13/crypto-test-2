@@ -15,9 +15,7 @@
       />
     </div>
 
-    <strong class="text-small">
-      {{ errorValue }}
-    </strong>
+    <SharedUiInputError :error="errorValue" />
   </label>
 </template>
 
